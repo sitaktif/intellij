@@ -119,9 +119,9 @@ public final class Task {
    * Read-only view of the current children of the task. Callers shouldn't attempt to modify the
    * returned unmodifiable list.
    */
-  List<Task> getChildren() {
+  /*List<Task> getChildren() {
     return childrenReadOnlyView;
-  }
+  }*/
 
   /** Type of the task. */
   public enum Type {

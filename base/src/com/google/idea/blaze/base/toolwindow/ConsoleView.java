@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.toolwindow;
 
+import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.console.NonProblemFilterWrapper;
 import com.google.idea.blaze.base.run.filter.BlazeTargetFilter;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
@@ -83,7 +84,7 @@ final class ConsoleView implements Disposable {
 
   private final AnsiEscapeDecoder ansiEscapeDecoder = new AnsiEscapeDecoder();
 
-  static ConsoleView create(Project project) {
+  static ConsoleView create(Project project, ImmutableList<Filter> consoleFilters) {
     ConsoleViewImpl consoleView =
         new ConsoleViewImpl(
             project,
@@ -91,7 +92,9 @@ final class ConsoleView implements Disposable {
             /* viewer= */ false,
             /* usePredefinedFilters= */ false);
 
-    return new ConsoleView(project, consoleView, createContent(project, consoleView));
+    ConsoleView view = new ConsoleView(project, consoleView, createContent(project, consoleView));
+    view.setCustomFilters(consoleFilters);
+    return view;
   }
 
   private ConsoleView(Project project, ConsoleViewImpl consoleView, JComponent content) {

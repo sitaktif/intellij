@@ -39,6 +39,7 @@ import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeCommandRunner;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
+import com.google.idea.blaze.base.command.BlazeInvocationContext.ContextType;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact.LocalFileArtifact;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
@@ -52,6 +53,7 @@ import com.google.idea.blaze.base.filecache.ArtifactsDiff;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
+import com.google.idea.blaze.base.issueparser.BlazeIssueParser;
 import com.google.idea.blaze.base.lang.AdditionalLanguagesHelper;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.BlazeVersionData;
@@ -75,6 +77,7 @@ import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
+import com.google.idea.blaze.base.scope.scopes.ToolWindowScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.BlazeBuildParams;
 import com.google.idea.blaze.base.sync.SyncProjectState;
@@ -85,6 +88,7 @@ import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.sharding.ShardedTargetList;
+import com.google.idea.blaze.base.toolwindow.Task;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -322,25 +326,45 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
             String.format(
                 "Building targets for shard %s of %s...", count, shardedTargets.shardCount());
     Function<List<TargetExpression>, BuildResult> invocation =
-        targets -> {
+        targets ->
+            Scope.push(
+                context,
+                (childContext) -> {
+                  ToolWindowScope parentToolWindowScope = context.getScope(ToolWindowScope.class);
+                  childContext.push(
+                      new ToolWindowScope.Builder()
+                          .setProject(project)
+                          .setTask(
+                              new Task(
+                                  "Build " + targets.toString(),
+                                  Task.Type.BLAZE_SYNC,
+                                  parentToolWindowScope != null
+                                      ? parentToolWindowScope.getTask()
+                                      : null))
+                          .setIssueParsers(
+                              BlazeIssueParser.defaultIssueParsers(
+                                  project, workspaceRoot, ContextType.Sync))
+                          .build());
 
-          BlazeBuildOutputs result =
-              runBuildForTargets(
-                  project,
-                  context,
-                  workspaceRoot,
-                  buildParams,
-                  projectViewSet,
-                  blazeInfo,
-                  activeLanguages,
-                  targets,
-                  aspectStrategy);
-          if (!result.buildResult.outOfMemory()) {
-            combinedResult.set(
-                combinedResult.isNull() ? result : combinedResult.get().updateOutputs(result));
-          }
-          return result.buildResult;
-        };
+                  BlazeBuildOutputs result =
+                      runBuildForTargets(
+                          project,
+                          childContext,
+                          workspaceRoot,
+                          buildParams,
+                          projectViewSet,
+                          blazeInfo,
+                          activeLanguages,
+                          targets,
+                          aspectStrategy);
+                  if (!result.buildResult.outOfMemory()) {
+                    combinedResult.set(
+                        combinedResult.isNull()
+                            ? result
+                            : combinedResult.get().updateOutputs(result));
+                  }
+                  return result.buildResult;
+                });
     BuildResult result =
         shardedTargets.runShardedCommand(
             project, context, progressMessage, invocation, parallelize);

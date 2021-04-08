@@ -75,6 +75,64 @@ config_setting(
 )
 
 config_setting(
+    name = "intellij-oss-latest",
+    values = {
+        "define": "ij_product=intellij-oss-latest",
+    },
+)
+
+config_setting(
+    name = "intellij-oss-latest-mac",
+    values = {
+        "cpu": "darwin_x86_64",
+        "define": "ij_product=intellij-oss-latest",
+    },
+)
+
+config_setting(
+    name = "intellij-ue-oss-latest",
+    values = {
+        "define": "ij_product=intellij-ue-oss-latest",
+    },
+)
+
+config_setting(
+    name = "intellij-ue-oss-latest-mac",
+    values = {
+        "cpu": "darwin_x86_64",
+        "define": "ij_product=intellij-ue-oss-latest",
+    },
+)
+
+config_setting(
+    name = "intellij-oss-beta",
+    values = {
+        "define": "ij_product=intellij-oss-beta",
+    },
+)
+
+config_setting(
+    name = "intellij-ue-oss-beta",
+    values = {
+        "define": "ij_product=intellij-ue-oss-beta",
+    },
+)
+
+config_setting(
+    name = "intellij-oss-under-dev",
+    values = {
+        "define": "ij_product=intellij-oss-under-dev",
+    },
+)
+
+config_setting(
+    name = "intellij-ue-oss-under-dev",
+    values = {
+        "define": "ij_product=intellij-ue-oss-under-dev",
+    },
+)
+
+config_setting(
     name = "intellij-2020.1",
     values = {
         "define": "ij_product=intellij-2020.1",

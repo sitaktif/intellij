@@ -31,9 +31,9 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class ProjectViewStorageManager {
 
-  private static final String BLAZE_EXTENSION = "blazeproject";
-  private static final String BAZEL_EXTENSION = "bazelproject";
-  private static final String LEGACY_EXTENSION = "asproject";
+  static final String BLAZE_EXTENSION = "blazeproject";
+  static final String BAZEL_EXTENSION = "bazelproject";
+  static final String LEGACY_EXTENSION = "asproject";
 
   public static final ImmutableList<String> VALID_EXTENSIONS =
       ImmutableList.of(BLAZE_EXTENSION, BAZEL_EXTENSION, LEGACY_EXTENSION);
@@ -44,7 +44,7 @@ public abstract class ProjectViewStorageManager {
 
   public static boolean isProjectViewFile(String fileName) {
     for (String ext : VALID_EXTENSIONS) {
-      if (fileName.endsWith("." + ext)) {
+      if (fileName.endsWith("." + ext) || fileName.equals(ext)) {
         return true;
       }
     }
